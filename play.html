@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>皇舆争霸</title>
+  <link rel="stylesheet" href="libs/bootstrap-mod.css">
+  <link rel="stylesheet" href="dominiate.css">
+  <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="../excanvas.min.js"></script><![endif]-->
+  <script language="javascript" type="text/javascript" src="libs/jquery-1.6.3.min.js"></script>
+  <script language="javascript" type="text/javascript" src="libs/jquery.flot.js"></script>
+</head>
+<body>
+
+<div id="masthead">
+  <h1>皇舆争霸</h1>
+  <h2 class="tagline">皇舆争霸策略模拟器.</h2>
+  <a class="about" href="http://rspeer.github.io/dominiate">修改自 Rob Speer 的原始项目</a>
+</div>
+
+<div id="news">
+May 30, 2023: 上班摸鱼期间，对 First Game 的策略做了一些测试 
+</div>
+
+<div id="p1">
+<h2>聪明猫老师</h2>
+<select name="loadStrategy1" id="loadStrategy1">
+</select>
+<pre id="editor-left">
+</pre>
+</div>
+
+<div id="p2">
+<h2>臭臭红宝石</h2>
+<select name="loadStrategy2" id="loadStrategy2">
+</select>
+<pre id="editor-right">
+</pre>
+</div>
+
+<div id="layoutSeparator"></div>
+<div class="container">
+  <div class="row">
+    <div class="span16" id="win-o-meter">
+      <div id="win-o-meter-back"></div>
+      <div id="win-p1-certain"></div>
+      <div id="win-p1-uncertain"></div>
+      <div id="win-p2-uncertain"></div>
+      <div id="win-p2-certain"></div>
+      <div id="score-p1"></div>
+      <div id="score-p2"></div>
+    </div>
+  </div>
+  <div class="row" id="gameControls">
+    <div class="span4">
+      <form>
+      <ul class="inputs-list">
+        <li><label>
+          <input type="radio" name="playUntil" value="playOne" id="playOne" />
+          <span>玩 1 次</span>
+        </label></li>
+        <li><label>
+          <input type="radio" name="playUntil" value="play100" id="play100" />
+          <span>玩 100 次</span>
+        </label></li>
+        <li><label>
+          <input type="radio" name="playUntil" value="play1000" id="play1000" />
+          <span>玩 1000 次</span>
+        </label></li>
+        <li><label>
+          <input type="radio" name="playUntil" value="play10000" id="play10000" />
+          <span>玩 10000 次</span>
+        </label></li>
+        <li><label>
+          <input type="radio" name="playUntil" value="playUntilDecisive" id="playUntilDecisive" checked="checked" />
+          <span>玩到分出胜负</span>
+        </label></li>
+      </ul>
+      </form>
+    </div>
+    <div class="span4">
+      <ul class="inputs-list">
+        <li>
+          <label>
+            <input type="checkbox" name="optionsCheckboxes" value="randomize"
+            id="randomize" checked="checked" />
+            <span>随机先后手</span>
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="checkbox" name="optionsCheckboxes" value="colonies"
+            id="colonies" />
+            <span>包含 Colony 和 Platinum</span>
+          </label>
+        </li>
+      </ul>
+      <button id="playButton" class="btn success">
+        开始
+      </button>
+      <a id="reset" href="#" class="btn">
+        重置
+      </a>
+    </div>
+  </div>
+</div>
+
+<div id="graphs">
+<h2>数据统计</h2>
+<h4>平均金钱与回合数的关系</h4>
+<div class="flotgraph" id="money-graph" height="200" width="400"></div>
+<h4>总VP与回合数的关系</h4>
+<div class="flotgraph" id="vp-graph" height="200" width="400"></div>
+</div>
+
+<div id="logs">
+  <h2>游戏记录</h2>
+  <pre id="gameLog">
+  </pre>
+
+  <div id="paginator" class="pagination">
+    <ul> 
+      <li class="prev disabled">上一页<a href="#"> </a></li>
+      <li class="active"><a href="#">1</a></li> 
+      <li><a href="#">2</a></li> 
+      <li><a href="#">3</a></li> 
+      <li><a href="#">4</a></li> 
+      <li><a href="#">5</a></li> 
+      <li class="next">下一页<a href="#"></a></li> 
+    </ul> 
+  </div>
+</div>
+
+<script src="libs/ace/src/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="libs/ace/src/theme-dawn.js" type="text/javascript" charset="utf-8"></script>
+<script src="libs/ace/src/mode-coffee.js" type="text/javascript" charset="utf-8"></script>
+<script src="libs/coffee-script.js" type="text/javascript" charset="utf-8"></script>
+<script src="libs/zeroTimeout.js" type="text/javascript" charset="utf-8"></script>
+<script src="playWeb.js" type="text/javascript" charset="utf-8"></script>
+<script src="multiLog.js" type="text/javascript"></script>
+<script src="scoreTracker.js" type="text/javascript"></script>
+<script src="grapher.js" type="text/javascript"></script>
+<script src="strategies.js" type="text/javascript"></script>
+
+<script type="text/coffeescript">
+$ = jQuery
+
+scrollToBottom = (elt) ->
+  elt.prop({ scrollTop: elt.prop("scrollHeight") })
+window.scrollToBottom = scrollToBottom
+
+loadStrategiesFromHash = ->
+  hash = window.location.hash
+  oldp1 = $('#loadStrategy1').val()
+  oldp2 = $('#loadStrategy2').val()
+  if hash
+    strategyNames = hash.substring(1).split('/')
+    p1 = strategyNames[0]
+    p2 = strategyNames[1] ? ''
+    unless strategies[p1]?
+      p1 = ''
+    unless strategies[p2]?
+      p2 = ''
+    if p1 != oldp1
+      $('#loadStrategy1').val(p1).change()
+    if p2 != oldp2
+      $('#loadStrategy2').val(p2).change()
+  else
+    $('#loadStrategy1').val('DoubleJack').change()
+    $('#loadStrategy2').val('BankWharf').change()
+
+window.addEventListener("hashchange", loadStrategiesFromHash, false)
+
+$ ->
+  # Here we have all the code that hooks the game into the web page.
+  # It is organized *terribly*, I realize.
+
+  window.editors = []
+  for box in ["editor-left", "editor-right"]
+    editor = ace.edit(box)
+    editor.setTheme("ace/theme/dawn")
+      
+    JavaScriptMode = require("ace/mode/coffee").Mode;
+    editor.getSession().setMode(new JavaScriptMode())
+    
+    editor.setShowPrintMargin(false)
+    window.editors.push(editor)
+ 
+  leftEd = window.editors[0].getSession()
+  rightEd = window.editors[1].getSession()
+
+  multiLog = new MultiLog($('#gameLog'), $('#paginator'))
+  log = multiLog.addLineToEnd
+  tracker = new ScoreTracker($('#scores'))
+  grapher = new Grapher()
+  window.tracker = tracker
+  window.grapher = grapher
+
+  singleGameResult = (state) =>
+    result = state.getWinners().toString() + " wins!"
+    multiLog.addLineToEnd(result)
+    # Avoid refreshing the output if it's not visible
+    multiLog.updateOutput() if multiLog.getCurrentPage() == multiLog.getLastPage()
+    tracker.recordGame(state)
+
+  errorHandler = (error) => alert(error.message)
+  
+  startTime = null
+
+  begunPlaying = ->
+    window.playing = true
+    $('#playButton').removeClass('success').addClass('danger')
+    $('#playButton').text('停止模拟')
+    startTime = new Date()
+  
+  donePlaying = (count) ->
+    window.playing = false
+    grapher.updateGraphs()
+    tracker.updateScoresOnPage()
+    $('#playButton').removeClass('danger').addClass('success')
+    $('#playButton').text('继续模拟')
+    console?.log?("Played #{count} games in #{(new Date() - startTime) / 1000.0}s");
+  window.donePlaying = donePlaying
+
+  playOneGame = ->
+    scripts = [leftEd.getValue(), rightEd.getValue()]
+    compiled = compileStrategies(scripts, errorHandler)
+    return if not compiled
+    multiLog.addPage('')
+    
+    options = {
+      log: log
+      colonies: $('#colonies').is(':checked')
+      randomizeOrder: $('#randomize').is(':checked')
+      tracker: tracker
+      grapher: grapher
+    }
+    playGame(compiled, options, singleGameResult)
+    grapher.updateGraphs()
+    tracker.updateScoresOnPage()
+
+
+  playUntil = (condition, count) ->
+    startTime = new Date();
+    scripts = [leftEd.getValue(), rightEd.getValue()]
+    compiled = compileStrategies(scripts, errorHandler)
+    return if not compiled
+    
+    options = {
+      log: log
+      colonies: $('#colonies').is(':checked')
+      randomizeOrder: $('#randomize').is(':checked')
+      tracker: tracker
+      grapher: grapher
+    }
+    playCount = 0
+    begunPlaying()
+    timeControlStarted = new Date()
+    playLoop = (result) ->
+      singleGameResult(result)
+      if condition() or (playCount >= count) or (not window.playing)
+        donePlaying(playCount)
+      else
+        multiLog.addPageQuietly('')
+        msWithControl = new Date() - timeControlStarted
+        playCount++
+        if msWithControl > 1000
+          tracker.updateScoresOnPage()
+          grapher.updateGraphs()
+          window.setZeroTimeout ->
+            timeControlStarted = new Date()
+            playGame(compiled, options, playLoop)
+        else
+          playGame(compiled, options, playLoop)
+
+    multiLog.addPageQuietly('')
+    playGame(compiled, options, playLoop)
+  
+  $('#playButton').click (event) -> 
+    if window.playing
+      window.playing = false
+    else if $('#playOne').is(':checked') then playOneGame()
+    else if $('#play100').is(':checked') then playUntil((-> false), 100)
+    else if $('#play1000').is(':checked') then playUntil((-> false), 1000)
+    else if $('#play10000').is(':checked') then playUntil((-> false), 10000)
+    else if $('#playUntilDecisive').is(':checked')
+      playUntil(tracker.decisiveWinner, Infinity)
+    return false
+
+  $('#reset').click (event) ->
+    tracker.reset()
+    grapher.reset()
+    #multiLog.reset()
+    return false
+
+  strategyElements = ['<option></option>']
+  for name of strategies
+    visibleName = name.replace('_', ' ')
+    strategyElements.push("<option value='#{name}'>#{visibleName}</option>")
+  strategyElements.sort()
+
+  $('#loadStrategy1').html(strategyElements.join(''))
+  $('#loadStrategy2').html(strategyElements.join(''))
+  $('#loadStrategy1').change =>
+    choice1 = $('#loadStrategy1 option:selected')[0].value
+    choice2 = $('#loadStrategy2 option:selected')[0].value
+    strategy = strategies[choice1] ? ''
+    leftEd.setValue(strategy)
+    window.location.hash = "#{choice1}/#{choice2}"
+  $('#loadStrategy2').change =>
+    choice1 = $('#loadStrategy1 option:selected')[0].value
+    choice2 = $('#loadStrategy2 option:selected')[0].value
+    strategy = strategies[choice2] ? ''
+    rightEd.setValue(strategy)
+    window.location.hash = "#{choice1}/#{choice2}"
+
+  # Set initial strategies based on the URL.
+  loadStrategiesFromHash(window.location.hash)
+  
+</script>
+
+</body>
+</html>

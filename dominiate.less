@@ -1,0 +1,283 @@
+.level0 {
+    position: absolute;
+    top: 45px;
+}
+
+.level1 {
+    position: absolute;
+    top: 70px;
+}
+
+.level1a {
+    position: absolute;
+    top: 77px;
+}
+
+.level2 {
+    position: absolute;
+    top: 105px;
+}
+
+.level3 {
+    margin-top: 570px;
+}
+
+.rounded-corners (@radius: 5px) {
+  border-radius: @radius;
+  -webkit-border-radius: @radius;
+  -moz-border-radius: @radius;
+}
+
+.editor (@width: 45%) {
+    .level2;
+    .rounded-corners(3px);
+    margin: 0;
+    position: absolute;
+    width: @width;
+    height: 450px;
+    border: 1px solid #bbb;
+}
+
+.error {
+    .rounded-corners(2px);
+    color: @darkred;
+    background-color: #fee;
+    border: 1px solid #faa;
+    padding: 2px;
+}
+
+@darkred: #900;
+@darkblue: #009;
+@lightred: #e44;
+@lightblue: #55f;
+@lightgray: #aaa;
+
+.ace_editor {
+    font-family: "Menlo", "Monaco", "Inconsolata", "Andale Mono", "Droid Sans Mono", monospace !important;
+}
+
+body {
+    margin-left: 5%;
+    margin-right: 5%;
+}
+
+#p1 {
+    h2 {
+        .level1;
+        left: 5%;
+        color: @darkred;
+    }
+    .selectLabel {
+        .level1;
+        right: 62%;
+    }
+    select {
+        .level1;
+        right: 52%;
+    }
+    .status {
+        .level1a;
+        left: 15%;
+    }
+}
+#p2 {
+    h2 {
+        .level1;
+        left: 50%;
+        color: @darkblue;
+    }
+    .selectLabel {
+        .level1;
+        right: 17%;
+    }
+    select {
+        .level1;
+        right: 7%;
+    }
+    .status {
+        .level1a;
+        left: 60%;
+    }
+}
+#editor-left { 
+    .level2;
+    .editor(45%);
+    left: 5%;
+}
+#editor-right { 
+    .level2;
+    .editor(45%);
+    left: 50%;
+}
+
+.player1 {
+    color: @darkred;
+    font-weight: bold;
+}
+
+.player2 {
+    color: @darkblue;
+    font-weight: bold;
+}
+
+#masthead {
+    background: #555;
+    color: #fff;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    font-size: 80%;
+
+    h1 {
+        color: #fff4bb;
+        display: inline;
+        padding-left: 0.5em;
+        padding-right: 0.5em;
+        font-weight: bold;
+        margin: 0;
+    }
+
+    h2.tagline {
+        color: #fff;
+        display: inline;
+        font-weight: normal;
+        font-size: 12pt;
+        margin: 0;
+    }
+
+    a.about {
+        font-weight: bold;
+        font-size: 14px;
+        color: #fff;
+        position: absolute;
+        top: 13px;
+        right: 15px;
+    }
+}
+
+#news {
+    .level0;
+}
+
+#layoutSeparator {
+    .level3;
+}
+
+#gameControls {
+    input {
+        margin-left: 1em;
+    }
+    label {
+        display: inline;
+        margin-right: 1em;
+    }
+}
+
+select {
+    color: #000;
+}
+
+.btn {
+    margin-top: 2px;
+}
+
+.row {
+    margin-bottom: 6px;
+}
+
+#playButton {
+    width: 120px;
+    text-align: center;
+}
+
+#graphs {
+    clear: both;
+    float: right;
+    width: 400px;
+    height: 520px;
+    margin-left: 20px;
+}
+
+.flotgraph {
+    width: 400px;
+    height: 200px;
+}
+
+#logs {
+    clear: left;
+}
+
+#gameLog {
+    height: 400px;
+    overflow: scroll;
+    overflow-x: hidden;
+    font-family: sans-serif;
+}
+
+#gameOutput {
+    font-size: 14pt;
+    margin-left: 10px;
+}
+
+#win-o-meter {
+    position: relative;
+    background-color: #000;
+    height: 20px;
+    width: 940px;
+}
+#win-o-meter-back {
+    position: absolute;
+    right: 0;
+    background-color: #333;
+    width: 470px;
+    height: 20px;
+    z-index: 1;
+}
+#win-p1-certain {
+    position: absolute;
+    left: 0;
+    width: 10px;
+    height: 20px;
+    background-color: @lightred;
+    z-index: 3;
+}
+#win-p2-certain {
+    position: absolute;
+    right: 0;
+    width: 10px;
+    height: 20px;
+    background-color: @lightblue;
+    z-index: 3;
+}
+#win-p1-uncertain {
+    position: absolute;
+    left: 0;
+    width: 469px;
+    height: 20px;
+    background-color: fadeout(@lightred, 50%);
+    z-index: 2;
+}
+#win-p2-uncertain {
+    position: absolute;
+    right: 0;
+    width: 469px;
+    height: 20px;
+    background-color: fadeout(@lightblue, 50%);
+    z-index: 2;
+}
+.score {
+    color: #fff;
+    font-size: 15px;
+    position: absolute;
+    z-index: 4;
+}
+#score-p1 {
+    .score;
+    left: 5px;
+}
+#score-p2 {
+    .score;
+    right: 5px;
+}
